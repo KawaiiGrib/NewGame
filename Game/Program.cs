@@ -185,6 +185,23 @@ namespace Game
             PlayerType playerType = (PlayerType)MessageHelper.getInt("Введіть тип вашого персонажа (Варвар: 1, Танк: 2, Разбійник: 3): ");
             Player player = engine.createPlayer(playerName, playerType);
 
+            // Створюємо магазини
+            Magazine mag1 = new Magazine(1, Caliber.Caliber556, 30);
+            Magazine mag2 = new Magazine(2, Caliber.Caliber556, 30);
+            Magazine mag3 = new Magazine(3, Caliber.Caliber762, 25);
+            Magazine mag4 = new Magazine(4, Caliber.Caliber9mm, 17);
+
+            // Створюємо зброю
+            Gun ak = new Gun(1, "AK-47", Caliber.Caliber762, mag3);
+            Gun m4 = new Gun(2, "M4A1", Caliber.Caliber556, mag1);
+            Gun glock = new Gun(3, "Glock 17", Caliber.Caliber9mm, mag4);
+
+            // Видаємо гравцю
+            player.AddGun(ak);
+            player.AddGun(m4);
+            player.AddGun(glock);
+            player.AddGunMagazine(mag2); // запасний магазин
+
             bool isPlaying = true;
             while (isPlaying)
             {
@@ -207,32 +224,65 @@ namespace Game
             while (inMenu)
             {
                 Console.Clear();
-                player.Inventory.ShowAll();
+
+                // Передаем player, чтобы инвентарь показал предметы + оружие + магазины
+                player.Inventory.ShowAll(player);
+
                 Console.WriteLine();
+                Console.WriteLine("--- Дії з предметами ---");
                 Console.WriteLine("1 - Використати предмет (за id)");
                 Console.WriteLine("2 - Видалити предмет (за id)");
+                Console.WriteLine("--- Дії зі зброєю ---");
+                Console.WriteLine("3 - Обрати зброю (за id)");
+                Console.WriteLine("4 - Перезарядити активну зброю");
+                Console.WriteLine("5 - Перемкнути на наступну зброю");
+                Console.WriteLine("6 - Зробити постріл (тест)");
                 Console.WriteLine("0 - Назад");
                 Console.Write("Ваш вибір: ");
 
                 string choice = Console.ReadLine();
 
-                if (choice == "1")
+                switch (choice)
                 {
-                    Console.Write("Введіть id: ");
-                    if (int.TryParse(Console.ReadLine(), out int id))
-                        player.Inventory.Use(id, player);
-                    Console.ReadLine();
-                }
-                else if (choice == "2")
-                {
-                    Console.Write("Введіть id: ");
-                    if (int.TryParse(Console.ReadLine(), out int id))
-                        player.Inventory.Remove(id);
-                    Console.ReadLine();
-                }
-                else if (choice == "0")
-                {
-                    inMenu = false;
+                    case "1":
+                        Console.Write("Введіть id предмета: ");
+                        if (int.TryParse(Console.ReadLine(), out int useId))
+                            player.Inventory.Use(useId, player);
+                        Console.ReadLine();
+                        break;
+
+                    case "2":
+                        Console.Write("Введіть id предмета: ");
+                        if (int.TryParse(Console.ReadLine(), out int remId))
+                            player.Inventory.Remove(remId);
+                        Console.ReadLine();
+                        break;
+
+                    case "3":
+                        Console.Write("Введіть id зброї: ");
+                        if (int.TryParse(Console.ReadLine(), out int gunId))
+                            player.SelectGun(gunId);
+                        Console.ReadLine();
+                        break;
+
+                    case "4":
+                        player.ReloadGun();
+                        Console.ReadLine();
+                        break;
+
+                    case "5":
+                        player.SwitchToNextGun();
+                        Console.ReadLine();
+                        break;
+
+                    case "6":
+                        player.FireGun();
+                        Console.ReadLine();
+                        break;
+
+                    case "0":
+                        inMenu = false;
+                        break;
                 }
             }
         }
