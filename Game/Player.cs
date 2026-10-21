@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Game
 {
@@ -12,6 +13,12 @@ namespace Game
         protected int exp = 0;
         protected int attack = 0;
         protected int protection = 0;
+        private const int MAX_GUNS = 4;
+        private const int MAX_GUN_MAGAZINES = 6;
+        public List<Gun> Guns { get; private set; } = new List<Gun>();
+        public List<Magazine> GunMagazines { get; private set; } = new List<Magazine>();
+        public Gun ActiveGun { get; private set; }
+
         protected Random random = null;
         protected List<IUseSkill> skills = null;
 
@@ -183,6 +190,132 @@ namespace Game
                 this.enMax += bonusEnergy;
                 this.ep += bonusEnergy;
             }
+        }
+        // ===== РОБОТА ЗІ ЗБРОЄЮ (GUN) =====
+
+        public bool AddGun(Gun gun)
+        {
+            if (Guns.Count >= MAX_GUNS)
+            {
+                Console.WriteLine($"Максимум {MAX_GUNS} одиниць зброї!");
+                return false;
+            }
+
+            Guns.Add(gun);
+            Console.WriteLine($"Додано зброю: {gun.Name}");
+
+            if (ActiveGun == null)
+                ActiveGun = gun;
+
+            return true;
+        }
+
+        public bool AddGunMagazine(Magazine magazine)
+        {
+            if (GunMagazines.Count >= MAX_GUN_MAGAZINES)
+            {
+                Console.WriteLine($"Максимум {MAX_GUN_MAGAZINES} магазинів!");
+                return false;
+            }
+
+            GunMagazines.Add(magazine);
+            return true;
+        }
+
+        public bool SelectGun(int id)
+        {
+            Gun gun = Guns.Find(g => g.Id == id);
+
+            if (gun == null)
+            {
+                Console.WriteLine($"Зброю з id={id} не знайдено.");
+                return false;
+            }
+
+            ActiveGun = gun;
+            Console.WriteLine($"Активна зброя: {gun.Name}");
+            return true;
+        }
+
+        public void SwitchToNextGun()
+        {
+            if (Guns.Count == 0) return;
+
+            int index = Guns.IndexOf(ActiveGun);
+            index = (index + 1) % Guns.Count;
+            ActiveGun = Guns[index];
+
+            Console.WriteLine($"Перемкнуто на: {ActiveGun.Name}");
+        }
+
+        public bool FireGun()
+        {
+            if (ActiveGun == null)
+            {
+                Console.WriteLine("Немає активної зброї!");
+                return false;
+            }
+
+            return ActiveGun.Shoot();
+        }
+
+        public bool ReloadGun()
+        {
+            if (ActiveGun == null)
+            {
+                Console.WriteLine("Немає активної зброї!");
+                return false;
+            }
+
+            Magazine newMag = GunMagazines.Find(
+                m => m.Caliber == ActiveGun.Caliber && m != ActiveGun.CurrentMagazine
+            );
+
+            if (newMag == null)
+            {
+                Console.WriteLine($"Немає магазинів калібру {ActiveGun.Caliber}!");
+                return false;
+            }
+
+            Magazine oldMag = ActiveGun.CurrentMagazine;
+            if (oldMag != null && GunMagazines.Count < MAX_GUN_MAGAZINES)
+                GunMagazines.Add(oldMag);
+
+            ActiveGun.ChangeMagazine(newMag);
+            GunMagazines.Remove(newMag);
+
+            return true;
+        }
+
+        public void ShowGuns()
+        {
+            Console.WriteLine($"=== Зброя (Gun) {name} ({Guns.Count}/{MAX_GUNS}) ===");
+
+            if (Guns.Count == 0)
+            {
+                Console.WriteLine("  (немає)");
+                return;
+            }
+
+            foreach (Gun g in Guns)
+            {
+                string marker = g == ActiveGun ? " ← АКТИВНА" : "";
+                Console.WriteLine($"  {g}{marker}");
+            }
+        }
+
+        public void ShowGunMagazines()
+        {
+            Console.WriteLine($"=== Магазини {name} ({GunMagazines.Count}/{MAX_GUN_MAGAZINES}) ===");
+
+            if (GunMagazines.Count == 0)
+            {
+                Console.WriteLine("  (немає)");
+                return;
+            }
+
+            foreach (Magazine m in GunMagazines)
+                Console.WriteLine("  " + m);
         }
     }
     class Barbarian : Player
